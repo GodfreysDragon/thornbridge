@@ -247,3 +247,45 @@ test('the page reports the scripted brain when the claude driver has no api key'
 
     $this->get('/')->assertOk()->assertSee('<meta name="npc-driver" content="scripted">', false);
 });
+
+test('a toll lowered to what was already paid is announced instead of left unnoticed', function () {
+    $game = Game::factory()->atBridge()->withState(['npc' => ['trust' => 4, 'paid' => 7]])->create();
+    $brain = useBrain([
+        QueuedNpcBrain::decision(NpcAction::SetToll, 'Seven, then.', amount: 7),
+        QueuedNpcBrain::decision(NpcAction::LetPass, 'Fair is fair. Cross.'),
+    ]);
+
+    $events = collect(play($game, 'Would you take seven?')->json('events'));
+
+    expect($events->last()['text'])->toBe('You now have grounds to cross (toll paid). Try crossing the bridge.');
+
+    play($game, 'cross the bridge')->assertJsonPath('game.status', 'won');
+
+    expect($brain->prompts[1]->facts)->toBe(['The traveller is waiting at your gate to cross. The game recognises grounds for passage (toll paid), so you may let them pass.']);
+});
+
+test('crossing without grounds is still blocked', function () {
+    $game = Game::factory()->atBridge()->create();
+    $brain = useBrain();
+
+    play($game, 'cross the bridge');
+
+    expect($brain->prompts[0]->facts)->toBe(['The traveller tried to walk through your gate without permission. You blocked them.']);
+});
+
+test('hints are worked out by the server and cost no exchange', function () {
+    $game = Game::factory()->create();
+    $brain = useBrain();
+
+    $hint = fn (): string => collect(play($game, 'hint')->json('events'))->last()['text'];
+
+    expect($hint())->toBe('Hint: someone dropped something down the well in Mossbury Square.');
+
+    play($game, 'take purse');
+    expect($hint())->toBe('Hint: something glints between the roots in the Whisperwood.');
+
+    play($game, 'go forest', 'take locket');
+    expect($hint())->toBe('Hint: that silver locket has a troll on it. Grimble might want it back.')
+        ->and($brain->prompts)->toBe([])
+        ->and($game->refresh()->npc_turns)->toBe(0);
+});

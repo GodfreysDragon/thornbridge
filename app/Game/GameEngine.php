@@ -109,6 +109,7 @@ class GameEngine
             'take' => $this->take($command->argument),
             'give' => $this->give($command->argument),
             'pay' => $this->pay($command->argument),
+            'hint' => $this->narrate($this->hint()),
             default => $this->say($command->argument),
         };
 
@@ -125,6 +126,8 @@ class GameEngine
             } elseif ($npcTurns >= World::MAX_NPC_TURNS) {
                 $status = GameStatus::Lost;
                 $this->narrate('The sun slips behind the hills. Grimble padlocks the gate for the night. You did not cross Thornbridge today.');
+            } else {
+                $this->announceNewGrounds($game->state);
             }
         }
 
@@ -193,8 +196,16 @@ class GameEngine
                 return;
             }
 
-            $this->narrate('You stride toward the gate. A huge mossy arm swings down and blocks your way.');
-            $this->facts[] = 'The traveller tried to walk through your gate without permission. You blocked them.';
+            $grounds = $this->rules->passageGrounds($this->state);
+
+            if ($grounds === []) {
+                $this->narrate('You stride toward the gate. A huge mossy arm swings down and blocks your way.');
+                $this->facts[] = 'The traveller tried to walk through your gate without permission. You blocked them.';
+            } else {
+                $this->narrate('You walk up to the gate and wait for Grimble to lift the latch.');
+                $this->facts[] = 'The traveller is waiting at your gate to cross. The game recognises grounds for passage ('.implode(', ', $grounds).'), so you may let them pass.';
+            }
+
             $this->npcResponds = true;
 
             return;
@@ -344,6 +355,42 @@ class GameEngine
         }
 
         return implode("\n\n", $lines);
+    }
+
+    /**
+     * Tell the player when a turn left them with grounds for passage the
+     * NPC didn't act on, such as a toll lowered to what they had already paid.
+     *
+     * @param  array<string, mixed>  $before  the state at the start of the turn
+     */
+    private function announceNewGrounds(array $before): void
+    {
+        $new = array_diff($this->rules->passageGrounds($this->state), $this->rules->passageGrounds($before));
+
+        if ($new !== []) {
+            $this->narrate('You now have grounds to cross ('.implode(', ', $new).'). Try crossing the bridge.');
+        }
+    }
+
+    /**
+     * A nudge toward the next step, worked out from the state. It never
+     * reaches the model and doesn't use up an exchange.
+     */
+    private function hint(): string
+    {
+        $npc = $this->state['npc'];
+        $grounds = $this->rules->passageGrounds($this->state);
+
+        return 'Hint: '.match (true) {
+            $grounds !== [] => 'you already have grounds to cross ('.implode(', ', $grounds).'). Go to the bridge and try crossing.',
+            in_array('locket', $this->state['inventory'], true) => 'that silver locket has a troll on it. Grimble might want it back.',
+            in_array('purse', $this->state['ground']['village'], true) => 'someone dropped something down the well in Mossbury Square.',
+            in_array('locket', $this->state['ground']['forest'], true) => 'something glints between the roots in the Whisperwood.',
+            $npc['riddle'] === 'unasked' => 'Grimble is fond of riddles. Ask him for one.',
+            $npc['riddle'] === 'asked' => 'think about what you leave on the road behind you with every step.',
+            $npc['trust'] < World::TRUST_TO_HAGGLE => 'be kind to Grimble. Once he trusts you a little ('.World::TRUST_TO_HAGGLE.'), he will haggle.',
+            default => 'ask Grimble for a lower toll (never below '.World::TOLL_FLOOR.' gold), then pay it.',
+        };
     }
 
     private function inventoryText(): string

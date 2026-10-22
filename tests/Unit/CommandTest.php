@@ -10,6 +10,8 @@ test('player input parses into commands', function (string $input, string $verb,
 })->with([
     ['look', 'look', ''],
     ['i', 'inventory', ''],
+    ['hint', 'hint', ''],
+    ['help', 'hint', ''],
     ['go to the forest', 'go', 'forest'],
     ['walk north', 'go', 'bridge'],
     ['go over the bridge', 'go', 'far_bank'],

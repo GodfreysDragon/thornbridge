@@ -29,6 +29,7 @@ final readonly class Command
         return match (true) {
             in_array($lower, ['look', 'l', 'look around'], true) => new self('look'),
             in_array($lower, ['inventory', 'inv', 'i'], true) => new self('inventory'),
+            in_array($lower, ['hint', 'help', '?'], true) => new self('hint'),
             in_array($lower, ['cross', 'cross bridge', 'cross the bridge'], true) => new self('go', 'far_bank'),
             (bool) preg_match('/^(?:go|walk|move|head|travel)\s+(?:to\s+)?(?:the\s+)?(.+)$/', $lower, $m) => new self('go', self::place($m[1])),
             (bool) preg_match('/^(?:take|get|grab|pick up)\s+(.+)$/', $lower, $m) => new self('take', $m[1]),

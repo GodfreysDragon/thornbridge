@@ -19,7 +19,10 @@ const cheats = [
 ];
 
 const chips = computed(() => {
-    const actions: { label: string; input: string }[] = [{ label: 'Look', input: 'look' }];
+    const actions: { label: string; input: string }[] = [
+        { label: 'Look', input: 'look' },
+        { label: 'Hint', input: 'hint' },
+    ];
 
     for (const exit of props.game.location.exits) {
         actions.push({ label: `Go to ${exit.name}`, input: `go ${exit.key}` });

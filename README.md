@@ -29,13 +29,17 @@ You need to cross Thornbridge. The toll is 10 gold and you start with 4. Any one
 You can also haggle. The troll may lower the toll, but only to 6 at the lowest, and only once his trust is at least 3. Every game is capped at
 25 NPC exchanges: nightfall is the story's clock and also the token budget.
 
+Stuck? Type `hint`. The server works out the nudge from the game state, so it never reaches the model and doesn't use up an exchange.
+If a turn leaves you with grounds to cross that the troll didn't act on (say he lowers the toll to what you've already paid), the
+narrator tells you, and crossing then tells the troll which ground applies.
+
 ## How a turn flows
 
 ```
 "pay 3" / "give locket" / free speech
         │
         ▼
- Command parser ──► deterministic verbs (go, take, give, pay, look) run server-side, no model
+ Command parser ──► deterministic verbs (go, take, give, pay, look, hint) run server-side, no model
         │                         │
         │                         └─► facts: "The traveller paid you 3 gold." (only things that really happened)
         ▼
