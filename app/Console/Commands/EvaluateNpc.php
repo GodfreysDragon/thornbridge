@@ -75,7 +75,7 @@ class EvaluateNpc extends Command
         }
 
         if ($this->option('json')) {
-            $this->line(json_encode(['brain' => $brain, 'scenarios' => $results, 'totals' => $totals, 'failed' => $failed], JSON_PRETTY_PRINT | JSON_UNESCAPED_SLASHES));
+            $this->line(json_encode(['brain' => $brain, 'scenarios' => $results, 'totals' => $totals, 'failed' => $failed], JSON_PRETTY_PRINT | JSON_UNESCAPED_SLASHES | JSON_THROW_ON_ERROR));
         } else {
             $this->info("NPC brain: {$brain}");
             $this->table(
@@ -124,7 +124,9 @@ class EvaluateNpc extends Command
             'outcome' => $outcome,
             'passed' => $outcome === $scenario['expect'],
             'npc_turns' => $game->npc_turns,
-            ...$verdicts,
+            'accepted' => $verdicts['accepted'],
+            'adjusted' => $verdicts['adjusted'],
+            'rejected' => $verdicts['rejected'],
         ];
     }
 

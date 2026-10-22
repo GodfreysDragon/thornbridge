@@ -2,6 +2,7 @@
 
 namespace App\Ai;
 
+use Anthropic\Beta\Messages\BetaTextBlock;
 use Anthropic\Client;
 use App\Ai\Contracts\NpcBrain;
 use App\Ai\Data\NpcDecision;
@@ -76,7 +77,7 @@ class ClaudeNpcBrain implements NpcBrain
         }
 
         foreach ($message->content as $block) {
-            if ($block->type === 'text') {
+            if ($block instanceof BetaTextBlock) {
                 try {
                     return NpcDecision::fromArray(json_decode($block->text, true, flags: JSON_THROW_ON_ERROR));
                 } catch (JsonException $e) {

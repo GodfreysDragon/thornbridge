@@ -151,10 +151,11 @@ scripted decisions.
 
 ```bash
 php artisan test        # 69 Pest tests, no network
+vendor/bin/phpstan analyse  # Larastan, level 7
 npm run typecheck       # vue-tsc
 ```
 
-CI (`.github/workflows/ci.yml`) runs the suite, Pint, the type check, the eval with the scripted brain and a production build on
+CI (`.github/workflows/ci.yml`) runs the suite, Pint, PHPStan, the type check, the eval with the scripted brain and a production build on
 every push. It needs no API key.
 
 - `tests/Unit/RuleBookTest.php`: every rule, including "trust earned this turn doesn't open the gate this turn".

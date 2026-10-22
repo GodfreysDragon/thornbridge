@@ -428,7 +428,7 @@ class GameEngine
             };
         }
 
-        return array_values(array_slice($lines, -self::TRANSCRIPT_LINES));
+        return array_slice($lines, -self::TRANSCRIPT_LINES);
     }
 
     /**
