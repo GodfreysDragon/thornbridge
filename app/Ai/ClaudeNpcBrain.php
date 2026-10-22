@@ -7,7 +7,6 @@ use App\Ai\Contracts\NpcBrain;
 use App\Ai\Data\NpcDecision;
 use App\Ai\Data\NpcPrompt;
 use App\Ai\Exceptions\NpcRefusedException;
-use App\Game\World;
 use JsonException;
 use UnexpectedValueException;
 
@@ -63,7 +62,7 @@ class ClaudeNpcBrain implements NpcBrain
             model: $this->model,
             maxTokens: 4096,
             system: [['type' => 'text', 'text' => self::SYSTEM, 'cacheControl' => ['type' => 'ephemeral']]],
-            messages: [['role' => 'user', 'content' => $this->render($prompt)]],
+            messages: [['role' => 'user', 'content' => $prompt->render()]],
             outputConfig: [
                 'effort' => 'low',
                 'format' => ['type' => 'json_schema', 'schema' => NpcDecision::schema()],
@@ -87,34 +86,5 @@ class ClaudeNpcBrain implements NpcBrain
         }
 
         throw new UnexpectedValueException("NPC response had no text block (stop reason: {$message->stopReason}).");
-    }
-
-    /**
-     * Build the per-turn user message. Player text is wrapped and escaped so it
-     * can't close the tag it sits in.
-     */
-    private function render(NpcPrompt $prompt): string
-    {
-        $sections = [
-            "<game_state>\n".implode("\n", $prompt->stateLines())."\n</game_state>",
-            "<recent_conversation>\n".($prompt->transcript === [] ? '(the traveller has just arrived)' : implode("\n", $prompt->transcript))."\n</recent_conversation>",
-        ];
-
-        if ($prompt->facts !== []) {
-            $sections[] = "<game_facts_this_turn>\n".implode("\n", $prompt->facts)."\n</game_facts_this_turn>";
-        }
-
-        if ($prompt->playerSaid !== null) {
-            $sections[] = '<traveller_says>'.htmlspecialchars($prompt->playerSaid, ENT_NOQUOTES).'</traveller_says>';
-        }
-
-        if ($prompt->rejection !== null) {
-            $previous = json_encode($prompt->rejection['decision']->toArray(), JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES);
-            $sections[] = "<game_rejected_your_action>\nYou proposed: {$previous}\nThe game rejected the action: {$prompt->rejection['explanation']}\nReply again for this same turn. Stay in character, keep your words consistent with what the game allows, and choose a permitted action (or none).\n</game_rejected_your_action>";
-        }
-
-        $sections[] = 'Respond as '.World::NPC_NAME.'.';
-
-        return implode("\n\n", $sections);
     }
 }

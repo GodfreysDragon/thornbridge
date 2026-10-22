@@ -7,6 +7,41 @@ const props = defineProps<{ events: GameEvent[]; busy: boolean }>();
 const log = ref<HTMLElement | null>(null);
 const story = computed(() => props.events.filter((event) => event.type !== 'ruling'));
 
+/** Each NPC line's rulings from the same turn, for the compact verdicts shown when the ledger is off screen. */
+const verdictsByNpcLine = computed(() => {
+    const byLine = new Map<number, GameEvent[]>();
+    let rulings: GameEvent[] = [];
+    let npcLine: number | null = null;
+
+    const flush = () => {
+        if (npcLine !== null) {
+            byLine.set(npcLine, rulings);
+        }
+    };
+
+    for (const event of props.events) {
+        if (event.type === 'player') {
+            flush();
+            rulings = [];
+            npcLine = null;
+        } else if (event.type === 'ruling') {
+            rulings.push(event);
+        } else if (event.type === 'npc') {
+            npcLine = event.id;
+        }
+    }
+
+    flush();
+
+    return byLine;
+});
+
+const verdictStyle: Record<string, string> = {
+    accepted: 'border-moss-400/30 text-moss-400',
+    adjusted: 'border-ember-400/30 text-ember-400',
+    rejected: 'border-blood-400/30 text-blood-400',
+};
+
 watch(
     () => [props.events.length, props.busy],
     async () => {
@@ -37,6 +72,20 @@ watch(
                             Grimble <span class="font-normal text-parchment-500 normal-case">· {{ event.data?.mood }}</span>
                         </p>
                         <p class="mt-0.5 text-[15px] leading-relaxed text-parchment-100">{{ event.text }}</p>
+                        <ul v-if="verdictsByNpcLine.get(event.id)?.length" class="mt-1.5 flex flex-wrap gap-1.5 lg:hidden" aria-label="How the server ruled">
+                            <li
+                                v-for="ruling in verdictsByNpcLine.get(event.id)"
+                                :key="ruling.id"
+                                class="rounded border px-1.5 py-0.5 text-[11px]"
+                                :class="[verdictStyle[ruling.data?.verdict ?? 'accepted'], { 'line-through opacity-60': ruling.data?.superseded }]"
+                            >
+                                {{ ruling.data?.verdict }}: {{ ruling.data?.proposal }}
+                            </li>
+                        </ul>
+                        <details v-if="event.data?.prompt" class="mt-1.5 text-xs text-parchment-500">
+                            <summary class="cursor-pointer select-none hover:text-parchment-300">What the server told Grimble</summary>
+                            <pre class="mt-1.5 max-h-64 overflow-auto rounded-md border border-ink-700 bg-ink-950 p-2 font-mono text-[11px] leading-relaxed whitespace-pre-wrap text-parchment-300">{{ event.data.prompt }}</pre>
+                        </details>
                     </div>
                 </div>
                 <p v-else class="text-[15px] leading-relaxed whitespace-pre-line text-parchment-300">{{ event.text }}</p>

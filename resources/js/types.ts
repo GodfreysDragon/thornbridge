@@ -18,7 +18,7 @@ export type GameEvent = {
     id: number;
     type: EventType;
     text: string | null;
-    data: (Partial<RulingData> & { mood?: string; verb?: string; facts?: string[] }) | null;
+    data: (Partial<RulingData> & { mood?: string; verb?: string; facts?: string[]; prompt?: string }) | null;
     created_at: string;
 };
 

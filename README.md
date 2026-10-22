@@ -74,7 +74,11 @@ narrator tells you, and crossing then tells the troll which ground applies.
 | Swappable brain | `App\Ai\Contracts\NpcBrain`: `ClaudeNpcBrain` or the offline `ScriptedNpcBrain` |
 
 The **Rule Ledger** in the UI lists every proposal with its verdict, the rule id (`gate.conditions`, `toll.floor`, `toll.haggle`, …),
-the server's explanation and the model's private reason. A proposal that was rejected and then retried is struck through.
+the server's explanation and the model's private reason. A proposal that was rejected and then retried is struck through. On phones,
+where the ledger sits below the story, each Grimble line also carries its own verdicts.
+
+Every Grimble line has a **What the server told Grimble** toggle that shows the exact per-turn prompt the model answered (the fixed
+system prompt lives in `ClaudeNpcBrain::SYSTEM`). It is stored with the line, so you can audit what the model knew on any turn.
 
 ## Getting started
 

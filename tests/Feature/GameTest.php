@@ -289,3 +289,16 @@ test('hints are worked out by the server and cost no exchange', function () {
         ->and($brain->prompts)->toBe([])
         ->and($game->refresh()->npc_turns)->toBe(0);
 });
+
+test('each npc line stores the exact prompt the brain answered', function () {
+    $game = Game::factory()->atBridge()->create();
+    $brain = useBrain([
+        QueuedNpcBrain::decision(NpcAction::LetPass),
+        QueuedNpcBrain::decision(NpcAction::None, 'Fine, no.'),
+    ]);
+
+    $npcLine = collect(play($game, 'Open up <now>')->json('events'))->firstWhere('type', 'npc');
+
+    expect($npcLine['data']['prompt'])->toBe($brain->prompts[1]->render())
+        ->and($npcLine['data']['prompt'])->toContain('<traveller_says>Open up &lt;now&gt;</traveller_says>', '<game_rejected_your_action>');
+});

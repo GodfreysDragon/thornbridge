@@ -74,6 +74,35 @@ final readonly class NpcPrompt
         ];
     }
 
+    /**
+     * Build the per-turn user message. Player text is wrapped and escaped so it
+     * can't close the tag it sits in.
+     */
+    public function render(): string
+    {
+        $sections = [
+            "<game_state>\n".implode("\n", $this->stateLines())."\n</game_state>",
+            "<recent_conversation>\n".($this->transcript === [] ? '(the traveller has just arrived)' : implode("\n", $this->transcript))."\n</recent_conversation>",
+        ];
+
+        if ($this->facts !== []) {
+            $sections[] = "<game_facts_this_turn>\n".implode("\n", $this->facts)."\n</game_facts_this_turn>";
+        }
+
+        if ($this->playerSaid !== null) {
+            $sections[] = '<traveller_says>'.htmlspecialchars($this->playerSaid, ENT_NOQUOTES).'</traveller_says>';
+        }
+
+        if ($this->rejection !== null) {
+            $previous = json_encode($this->rejection['decision']->toArray(), JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES);
+            $sections[] = "<game_rejected_your_action>\nYou proposed: {$previous}\nThe game rejected the action: {$this->rejection['explanation']}\nReply again for this same turn. Stay in character, keep your words consistent with what the game allows, and choose a permitted action (or none).\n</game_rejected_your_action>";
+        }
+
+        $sections[] = 'Respond as '.World::NPC_NAME.'.';
+
+        return implode("\n\n", $sections);
+    }
+
     private function itemName(string $key): string
     {
         return World::itemName($key);

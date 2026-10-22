@@ -158,11 +158,16 @@ class GameEngine
         for ($attempt = 1; $result->actionRejected() && $attempt <= self::REPAIR_ATTEMPTS; $attempt++) {
             $this->recordRulings($result->rulings, $decision, superseded: true);
 
-            $decision = $this->decide($prompt->withRejection($decision, $result->actionRuling->explanation));
+            $prompt = $prompt->withRejection($decision, $result->actionRuling->explanation);
+            $decision = $this->decide($prompt);
             $result = $this->rules->apply($this->state, $decision);
         }
 
-        $this->record(EventType::Npc, $decision->reply, ['mood' => $decision->mood->value, 'facts' => $this->facts]);
+        $this->record(EventType::Npc, $decision->reply, [
+            'mood' => $decision->mood->value,
+            'facts' => $this->facts,
+            'prompt' => $prompt->render(),
+        ]);
         $this->recordRulings($result->rulings, $decision, superseded: false);
 
         if ($result->actionRejected()) {
