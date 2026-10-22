@@ -31,3 +31,5 @@ jobs:
       - run: cp .env.example .env && php artisan key:generate
       # No API key in CI: the suite uses the scripted brain and a fake Anthropic transport.
       - run: php artisan test --compact
+      - run: touch database/database.sqlite && php artisan migrate --force
+      - run: php artisan thornbridge:eval --driver=scripted
