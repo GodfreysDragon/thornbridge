@@ -240,3 +240,10 @@ test('input is validated', function () {
 test('the game page renders', function () {
     $this->get('/')->assertOk()->assertSee('id="app"', false);
 });
+
+test('the page reports the scripted brain when the claude driver has no api key', function () {
+    config(['ai.driver' => 'claude', 'ai.anthropic.api_key' => null]);
+    app()->forgetInstance(NpcBrain::class);
+
+    $this->get('/')->assertOk()->assertSee('<meta name="npc-driver" content="scripted">', false);
+});

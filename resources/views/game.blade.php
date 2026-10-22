@@ -3,7 +3,7 @@
 <head>
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
-    <meta name="npc-driver" content="{{ config('ai.driver') }}">
+    <meta name="npc-driver" content="{{ app(\App\Ai\Contracts\NpcBrain::class) instanceof \App\Ai\ScriptedNpcBrain ? 'scripted' : 'claude' }}">
     <title>Thornbridge: an AI NPC with a server referee</title>
     @fonts
     @vite(['resources/css/app.css', 'resources/js/app.ts'])

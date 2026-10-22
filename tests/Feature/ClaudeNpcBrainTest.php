@@ -5,6 +5,7 @@ use App\Ai\ClaudeNpcBrain;
 use App\Ai\Contracts\NpcBrain;
 use App\Ai\Data\NpcPrompt;
 use App\Ai\Exceptions\NpcRefusedException;
+use App\Ai\ScriptedNpcBrain;
 use App\Enums\NpcAction;
 use App\Enums\NpcMood;
 use App\Game\World;
@@ -127,4 +128,11 @@ test('the claude driver is the default binding', function () {
     app()->forgetInstance(NpcBrain::class);
 
     expect(app(NpcBrain::class))->toBeInstanceOf(ClaudeNpcBrain::class);
+});
+
+test('the claude driver falls back to the scripted brain without an api key', function () {
+    config(['ai.driver' => 'claude', 'ai.anthropic.api_key' => null]);
+    app()->forgetInstance(NpcBrain::class);
+
+    expect(app(NpcBrain::class))->toBeInstanceOf(ScriptedNpcBrain::class);
 });

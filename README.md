@@ -8,6 +8,10 @@ against the authoritative game state.
 > **The AI proposes, the server disposes.** You can sweet-talk, bribe, lie to or prompt-inject the troll. If the model believes you,
 > the gate still stays shut unless the server agrees.
 
+![A prompt injection and a false payment claim, both refused in the Rule Ledger](docs/media/cheat-blocked.gif)
+
+_Recorded with the offline scripted brain, which is deliberately gullible: it proposes `let_pass` and the RuleBook rejects it._
+
 Most "AI game" demos run the model in the browser and trust whatever it says. Here the browser is a thin client, the model is an untrusted
 advisor, and Laravel is the referee.
 
@@ -79,7 +83,7 @@ php artisan migrate
 npm run build
 ```
 
-Choose a brain in `.env`:
+Choose a brain in `.env`. With no API key the game falls back to the offline scripted brain, so a fresh clone is playable straight away:
 
 ```dotenv
 AI_DRIVER=claude          # or "scripted" to play fully offline
@@ -104,16 +108,18 @@ Open http://127.0.0.1:8030. Use `npm run dev` alongside it for hot reload.
 
 ## Running without an API key
 
-Set `AI_DRIVER=scripted`. `ScriptedNpcBrain` answers with keyword rules, so the whole game, ledger included, works offline. It is
+Set `AI_DRIVER=scripted`, or just leave `ANTHROPIC_API_KEY` empty. `ScriptedNpcBrain` answers with keyword rules, so the whole game, ledger included, works offline. It is
 intentionally naive about "orders" so you can watch the RuleBook block a cheating NPC. The test suite always uses it, or a queue of
 scripted decisions.
 
 ## Tests
 
 ```bash
-php artisan test        # 55 Pest tests, no network
+php artisan test        # 57 Pest tests, no network
 npm run typecheck       # vue-tsc
 ```
+
+CI (`.github/workflows/ci.yml`) runs the suite, Pint, the type check and a production build on every push. It needs no API key.
 
 - `tests/Unit/RuleBookTest.php`: every rule, including "trust earned this turn doesn't open the gate this turn".
 - `tests/Feature/GameTest.php`: full playthroughs, prompt injection, the repair retry, the server-judged riddle, rollback on a model
@@ -128,3 +134,7 @@ npm run typecheck       # vue-tsc
 | `POST` | `/api/games` | Start a game. The returned UUID is the capability to play it. |
 | `GET` | `/api/games/{id}` | State plus the full event log. |
 | `POST` | `/api/games/{id}/turns` | `{ "input": "pay 3" }` → `{ events, game }`. Returns 409 while a turn is in flight and 422 once the game is over. |
+
+## License
+
+MIT. See [LICENSE.md](LICENSE.md).

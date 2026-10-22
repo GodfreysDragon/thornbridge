@@ -1,9 +1,9 @@
 {
     "$schema": "https://getcomposer.org/schema.json",
-    "name": "laravel/laravel",
+    "name": "calmarusin/thornbridge",
     "type": "project",
-    "description": "The skeleton application for the Laravel framework.",
-    "keywords": ["laravel", "framework"],
+    "description": "A text adventure whose NPC is voiced by Claude while a Laravel server referees every move: the AI proposes, the server disposes.",
+    "keywords": ["laravel", "vue", "llm", "claude", "game-ai", "prompt-injection"],
     "license": "MIT",
     "require": {
         "php": "^8.3",

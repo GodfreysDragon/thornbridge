@@ -19,8 +19,8 @@ class AppServiceProvider extends ServiceProvider
      */
     public function register(): void
     {
-        $this->app->singleton(NpcBrain::class, fn () => match (config('ai.driver')) {
-            'scripted' => new ScriptedNpcBrain,
+        $this->app->singleton(NpcBrain::class, fn () => match (true) {
+            config('ai.driver') === 'scripted', blank(config('ai.anthropic.api_key')) => new ScriptedNpcBrain,
             default => new ClaudeNpcBrain(
                 new Client(apiKey: config('ai.anthropic.api_key')),
                 config('ai.anthropic.model'),
