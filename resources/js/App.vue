@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { computed, onMounted, ref } from 'vue';
-import { api, ApiError } from './api';
+import { api, ApiError, type GameAccess } from './api';
 import CommandBar from './components/CommandBar.vue';
 import NpcPanel from './components/NpcPanel.vue';
 import RuleLedger from './components/RuleLedger.vue';
@@ -11,6 +11,7 @@ import type { Game, GameEvent } from './types';
 const STORAGE_KEY = 'thornbridge.game';
 
 const game = ref<Game | null>(null);
+const access = ref<GameAccess | null>(null);
 const events = ref<GameEvent[]>([]);
 const busy = ref(false);
 const error = ref<string | null>(null);
@@ -18,11 +19,22 @@ const driver = document.querySelector<HTMLMetaElement>('meta[name="npc-driver"]'
 
 const rulings = computed(() => events.value.filter((event) => event.type === 'ruling'));
 
-function remember(id: string) {
+function remember(saved: GameAccess) {
     try {
-        localStorage.setItem(STORAGE_KEY, id);
+        localStorage.setItem(STORAGE_KEY, JSON.stringify(saved));
     } catch {
         // Storage can be unavailable (private mode); resuming is a convenience.
+    }
+}
+
+/** The saved game, if storage holds one in the current format (older saves were a bare id with no token). */
+function recall(): GameAccess | null {
+    try {
+        const saved = JSON.parse(localStorage.getItem(STORAGE_KEY) ?? 'null');
+
+        return typeof saved?.id === 'string' && typeof saved?.token === 'string' ? { id: saved.id, token: saved.token } : null;
+    } catch {
+        return null;
     }
 }
 
@@ -31,10 +43,11 @@ async function startNewGame() {
     error.value = null;
 
     try {
-        const created = await api.newGame();
+        const { token, ...created } = await api.newGame();
         game.value = created;
+        access.value = { id: created.id, token };
         events.value = created.events ?? [];
-        remember(created.id);
+        remember(access.value);
     } catch (e) {
         error.value = e instanceof ApiError ? e.message : 'Could not start a game.';
     } finally {
@@ -43,7 +56,7 @@ async function startNewGame() {
 }
 
 async function send(input: string) {
-    if (!game.value || busy.value) {
+    if (!game.value || !access.value || busy.value) {
         return;
     }
 
@@ -51,7 +64,7 @@ async function send(input: string) {
     error.value = null;
 
     try {
-        const result = await api.playTurn(game.value.id, input);
+        const result = await api.playTurn(access.value, input);
         events.value.push(...result.events);
         game.value = result.game;
     } catch (e) {
@@ -62,18 +75,13 @@ async function send(input: string) {
 }
 
 onMounted(async () => {
-    let saved: string | null = null;
-
-    try {
-        saved = localStorage.getItem(STORAGE_KEY);
-    } catch {
-        saved = null;
-    }
+    const saved = recall();
 
     if (saved) {
         try {
             const loaded = await api.loadGame(saved);
             game.value = loaded;
+            access.value = saved;
             events.value = loaded.events ?? [];
             return;
         } catch {

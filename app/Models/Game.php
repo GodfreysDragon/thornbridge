@@ -11,8 +11,8 @@ use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 
 /**
- * One playthrough. The random UUID doubles as the capability to play it,
- * so there are no accounts to set up for a demo.
+ * One playthrough. There are no accounts: whoever holds the game's signed
+ * access token (see accessToken()) may play it.
  *
  * @property string $id
  * @property GameStatus $status
@@ -49,6 +49,20 @@ class Game extends Model
     public function events(): HasMany
     {
         return $this->hasMany(GameEvent::class)->orderBy('id');
+    }
+
+    /**
+     * The capability to read and play this game: an HMAC of its id under the
+     * app key, so it never needs storing and rotating APP_KEY revokes them all.
+     */
+    public function accessToken(): string
+    {
+        return hash_hmac('sha256', "game:{$this->id}", (string) config('app.key'));
+    }
+
+    public function hasAccessToken(string $token): bool
+    {
+        return hash_equals($this->accessToken(), $token);
     }
 
     public function turnsLeft(): int

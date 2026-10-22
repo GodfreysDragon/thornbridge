@@ -19,7 +19,10 @@ class GameController extends Controller
     {
         $game = $this->engine->start()->load('events');
 
-        return (new GameResource($game))->response()->setStatusCode(201);
+        return response()->json([
+            ...(new GameResource($game))->resolve(),
+            'token' => $game->accessToken(),
+        ], 201);
     }
 
     public function show(Game $game): GameResource

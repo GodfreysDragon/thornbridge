@@ -71,6 +71,7 @@ narrator tells you, and crossing then tells the troll which ground applies.
 | Double-submit / race protection | `Cache::lock("game-turn:{id}")`, so a second concurrent turn gets a 409 |
 | Token spend limits | `throttle:npc` (per IP per minute), `throttle:new-game`, 25 NPC turns per game |
 | Refusals | `fallbacks: 'default'` server-side fallback, then a silent troll instead of an error |
+| Who may play a game | `EnsureGameToken` middleware: a signed per-game token, not the bare id |
 | Swappable brain | `App\Ai\Contracts\NpcBrain`: `ClaudeNpcBrain` or the offline `ScriptedNpcBrain` |
 
 The **Rule Ledger** in the UI lists every proposal with its verdict, the rule id (`gate.conditions`, `toll.floor`, `toll.haggle`, …),
@@ -162,9 +163,12 @@ CI (`.github/workflows/ci.yml`) runs the suite, Pint, the type check and a produ
 
 | Method | Path | Notes |
 | --- | --- | --- |
-| `POST` | `/api/games` | Start a game. The returned UUID is the capability to play it. |
+| `POST` | `/api/games` | Start a game. The response includes a `token`, returned only here. |
 | `GET` | `/api/games/{id}` | State plus the full event log. |
 | `POST` | `/api/games/{id}/turns` | `{ "input": "pay 3" }` → `{ events, game }`. Returns 409 while a turn is in flight and 422 once the game is over. |
+
+Both `{id}` routes need the header `X-Game-Token: <token>`. The token is an HMAC of the game id under `APP_KEY`, so nothing extra is
+stored and rotating the key revokes every token. A missing or wrong token gets the same 404 as an unknown game.
 
 ## License
 

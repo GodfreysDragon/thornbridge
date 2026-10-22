@@ -9,10 +9,17 @@ export class ApiError extends Error {
     }
 }
 
-async function request<T>(method: string, url: string, body?: unknown): Promise<T> {
+/** A game id plus the signed token that lets this browser play it. */
+export type GameAccess = { id: string; token: string };
+
+async function request<T>(method: string, url: string, body?: unknown, token?: string): Promise<T> {
     const response = await fetch(url, {
         method,
-        headers: { Accept: 'application/json', 'Content-Type': 'application/json' },
+        headers: {
+            Accept: 'application/json',
+            'Content-Type': 'application/json',
+            ...(token ? { 'X-Game-Token': token } : {}),
+        },
         body: body === undefined ? undefined : JSON.stringify(body),
     });
 
@@ -32,8 +39,8 @@ async function request<T>(method: string, url: string, body?: unknown): Promise<
 }
 
 export const api = {
-    newGame: () => request<Game>('POST', '/api/games'),
-    loadGame: (id: string) => request<Game>('GET', `/api/games/${id}`),
-    playTurn: (id: string, input: string) =>
-        request<{ events: GameEvent[]; game: Game }>('POST', `/api/games/${id}/turns`, { input }),
+    newGame: () => request<Game & { token: string }>('POST', '/api/games'),
+    loadGame: (access: GameAccess) => request<Game>('GET', `/api/games/${access.id}`, undefined, access.token),
+    playTurn: (access: GameAccess, input: string) =>
+        request<{ events: GameEvent[]; game: Game }>('POST', `/api/games/${access.id}/turns`, { input }, access.token),
 };

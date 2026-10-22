@@ -5,10 +5,12 @@ use App\Ai\Exceptions\NpcRefusedException;
 use App\Enums\GameStatus;
 use App\Enums\NpcAction;
 use App\Game\World;
+use App\Http\Middleware\EnsureGameToken;
 use App\Models\Game;
 use Illuminate\Support\Facades\Cache;
 use Illuminate\Testing\TestResponse;
 use Tests\Support\QueuedNpcBrain;
+use Tests\TestCase;
 
 /**
  * @param  list<mixed>  $queue
@@ -22,15 +24,25 @@ function useBrain(array $queue = []): QueuedNpcBrain
 }
 
 /**
- * Play a sequence of inputs, asserting each succeeds, and return the last response.
+ * A request carrying the game's signed access token.
  */
-function play(Game|string $game, string ...$inputs): TestResponse
+function asPlayer(Game $game): TestCase
 {
-    $id = $game instanceof Game ? $game->id : $game;
+    return test()->withHeader(EnsureGameToken::HEADER, $game->accessToken());
+}
+
+/**
+ * Play a sequence of inputs, asserting each succeeds, and return the last response.
+ *
+ * @param  Game|array{id: string, token: string}  $game  a game, or the body of POST /api/games
+ */
+function play(Game|array $game, string ...$inputs): TestResponse
+{
+    [$id, $token] = $game instanceof Game ? [$game->id, $game->accessToken()] : [$game['id'], $game['token']];
     $response = null;
 
     foreach ($inputs as $input) {
-        $response = test()->postJson("/api/games/{$id}/turns", ['input' => $input])->assertOk();
+        $response = test()->withHeader(EnsureGameToken::HEADER, $token)->postJson("/api/games/{$id}/turns", ['input' => $input])->assertOk();
     }
 
     return $response;
@@ -47,10 +59,10 @@ test('starting a game drops the player in the village', function () {
 });
 
 test('the locket wins the game with the scripted npc', function () {
-    $id = $this->postJson('/api/games')->json('id');
+    $created = $this->postJson('/api/games')->json();
 
-    play($id, 'go to the forest', 'take locket', 'go back', 'go north');
-    $response = play($id, 'give the locket to grimble');
+    play($created, 'go to the forest', 'take locket', 'go back', 'go north');
+    $response = play($created, 'give the locket to grimble');
 
     $response->assertJsonPath('game.status', 'won')
         ->assertJsonPath('game.location.key', World::GOAL)
@@ -60,13 +72,13 @@ test('the locket wins the game with the scripted npc', function () {
 });
 
 test('haggling and paying wins the game with the scripted npc', function () {
-    $id = $this->postJson('/api/games')->json('id');
+    $created = $this->postJson('/api/games')->json();
 
-    play($id, 'take purse', 'go north', 'Hello there', 'Thank you kindly');
-    play($id, 'Can we haggle?')->assertJsonPath('game.npc.toll', 8);
-    play($id, 'Any chance of a discount?')->assertJsonPath('game.npc.toll', 6);
+    play($created, 'take purse', 'go north', 'Hello there', 'Thank you kindly');
+    play($created, 'Can we haggle?')->assertJsonPath('game.npc.toll', 8);
+    play($created, 'Any chance of a discount?')->assertJsonPath('game.npc.toll', 6);
 
-    $response = play($id, 'pay 6');
+    $response = play($created, 'pay 6');
 
     $response->assertJsonPath('game.status', 'won')
         ->assertJsonPath('game.player.gold', 1)
@@ -185,7 +197,7 @@ test('a failed model call leaves the game untouched', function () {
     $brain = useBrain();
     $brain->failNextWith();
 
-    $this->postJson("/api/games/{$game->id}/turns", ['input' => 'pay 4'])->assertServerError();
+    asPlayer($game)->postJson("/api/games/{$game->id}/turns", ['input' => 'pay 4'])->assertServerError();
 
     expect($game->refresh()->state['gold'])->toBe(4)
         ->and($game->events()->count())->toBe(0)
@@ -208,7 +220,7 @@ test('turns for the same game are serialised', function () {
     $lock = Cache::lock("game-turn:{$game->id}", 60);
     $lock->get();
 
-    $this->postJson("/api/games/{$game->id}/turns", ['input' => 'pay 4'])->assertStatus(409);
+    asPlayer($game)->postJson("/api/games/{$game->id}/turns", ['input' => 'pay 4'])->assertStatus(409);
 
     $lock->release();
     expect($game->refresh()->state['gold'])->toBe(4);
@@ -220,20 +232,20 @@ test('nightfall ends the game when the npc turn budget runs out', function () {
 
     play($game, 'hello')->assertJsonPath('game.status', 'lost')->assertJsonPath('game.turns_left', 0);
 
-    $this->postJson("/api/games/{$game->id}/turns", ['input' => 'hello'])->assertStatus(422);
+    asPlayer($game)->postJson("/api/games/{$game->id}/turns", ['input' => 'hello'])->assertStatus(422);
 });
 
 test('a finished game accepts no more turns', function () {
     $game = Game::factory()->create(['status' => GameStatus::Won]);
 
-    $this->postJson("/api/games/{$game->id}/turns", ['input' => 'look'])->assertStatus(422);
+    asPlayer($game)->postJson("/api/games/{$game->id}/turns", ['input' => 'look'])->assertStatus(422);
 });
 
 test('input is validated', function () {
     $game = Game::factory()->create();
 
-    $this->postJson("/api/games/{$game->id}/turns", ['input' => str_repeat('a', 301)])->assertJsonValidationErrors('input');
-    $this->postJson("/api/games/{$game->id}/turns", [])->assertJsonValidationErrors('input');
+    asPlayer($game)->postJson("/api/games/{$game->id}/turns", ['input' => str_repeat('a', 301)])->assertJsonValidationErrors('input');
+    asPlayer($game)->postJson("/api/games/{$game->id}/turns", [])->assertJsonValidationErrors('input');
     $this->postJson('/api/games/not-a-game/turns', ['input' => 'look'])->assertNotFound();
 });
 
@@ -302,3 +314,31 @@ test('each npc line stores the exact prompt the brain answered', function () {
     expect($npcLine['data']['prompt'])->toBe($brain->prompts[1]->render())
         ->and($npcLine['data']['prompt'])->toContain('<traveller_says>Open up &lt;now&gt;</traveller_says>', '<game_rejected_your_action>');
 });
+
+test('a new game comes with the signed token that unlocks it', function () {
+    $created = $this->postJson('/api/games')->assertCreated()->json();
+    $game = Game::findOrFail($created['id']);
+
+    expect($created['token'])->toBe($game->accessToken());
+
+    $this->withHeader(EnsureGameToken::HEADER, $created['token'])->getJson("/api/games/{$game->id}")
+        ->assertOk()
+        ->assertJsonPath('id', $game->id)
+        ->assertJsonMissingPath('token');
+});
+
+test('a game cannot be read or played without its token', function (?string $token) {
+    $game = Game::factory()->atBridge()->create();
+    $brain = useBrain();
+    $request = $token === null ? $this : $this->withHeader(EnsureGameToken::HEADER, $token);
+
+    $request->getJson("/api/games/{$game->id}")->assertNotFound();
+    $request->postJson("/api/games/{$game->id}/turns", ['input' => 'pay 4'])->assertNotFound();
+
+    expect($brain->prompts)->toBe([])
+        ->and($game->refresh()->state['npc']['paid'])->toBe(0);
+})->with([
+    'no token' => [null],
+    'wrong token' => [str_repeat('0', 64)],
+    'another game\'s token' => [fn () => Game::factory()->create()->accessToken()],
+]);

@@ -8,7 +8,7 @@ use Illuminate\Foundation\Http\FormRequest;
 class PlayTurnRequest extends FormRequest
 {
     /**
-     * Knowing the game's UUID is the authorization.
+     * The EnsureGameToken middleware has already checked the game's token.
      */
     public function authorize(): bool
     {
