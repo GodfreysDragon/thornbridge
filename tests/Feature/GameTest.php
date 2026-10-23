@@ -342,3 +342,14 @@ test('a game cannot be read or played without its token', function (?string $tok
     'wrong token' => [str_repeat('0', 64)],
     'another game\'s token' => [fn () => Game::factory()->create()->accessToken()],
 ]);
+
+test('rate limits key on the configured edge header, and ignore it when none is configured', function (?string $header, int $secondVisitorStatus) {
+    config(['ai.rate_limits.games_per_hour' => 1, 'ai.rate_limits.client_ip_header' => $header]);
+
+    $this->withHeader('CF-Connecting-IP', '203.0.113.7')->postJson('/api/games')->assertCreated();
+    $this->withHeader('CF-Connecting-IP', '203.0.113.7')->postJson('/api/games')->assertTooManyRequests();
+    $this->withHeader('CF-Connecting-IP', '198.51.100.4')->postJson('/api/games')->assertStatus($secondVisitorStatus);
+})->with([
+    'behind the edge' => ['CF-Connecting-IP', 201],
+    'reachable directly' => [null, 429],
+]);

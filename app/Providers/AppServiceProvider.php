@@ -43,7 +43,19 @@ class AppServiceProvider extends ServiceProvider
      */
     protected function configureRateLimiting(): void
     {
-        RateLimiter::for('npc', fn (Request $request) => Limit::perMinute(config('ai.rate_limits.turns_per_minute'))->by($request->ip()));
-        RateLimiter::for('new-game', fn (Request $request) => Limit::perHour(config('ai.rate_limits.games_per_hour'))->by($request->ip()));
+        RateLimiter::for('npc', fn (Request $request) => Limit::perMinute(config('ai.rate_limits.turns_per_minute'))->by($this->clientIp($request)));
+        RateLimiter::for('new-game', fn (Request $request) => Limit::perHour(config('ai.rate_limits.games_per_hour'))->by($this->clientIp($request)));
+    }
+
+    /**
+     * The visitor's address for rate limiting: the configured edge header
+     * when there is one, otherwise the connecting address.
+     */
+    protected function clientIp(Request $request): string
+    {
+        $header = config('ai.rate_limits.client_ip_header');
+        $forwarded = is_string($header) && $header !== '' ? $request->header($header) : null;
+
+        return is_string($forwarded) && filter_var($forwarded, FILTER_VALIDATE_IP) ? $forwarded : (string) $request->ip();
     }
 }
