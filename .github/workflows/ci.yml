@@ -34,3 +34,16 @@ jobs:
       - run: php artisan test --compact
       - run: touch database/database.sqlite && php artisan migrate --force
       - run: php artisan thornbridge:eval --driver=scripted
+
+  docker:
+    name: Docker image boots and serves the game
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+      - run: docker build -t thornbridge .
+      - run: docker run -d --name thornbridge -p 8080:8080 -e APP_ENV=production -e APP_DEBUG=false -e AI_DRIVER=scripted thornbridge
+      - run: |
+          for i in $(seq 1 30); do curl -fs http://localhost:8080/up && exit 0; sleep 2; done
+          docker logs thornbridge
+          exit 1
+      - run: curl -fs -X POST http://localhost:8080/api/games -H 'Accept: application/json' | grep -q '"token"'
