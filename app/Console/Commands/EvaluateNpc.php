@@ -40,6 +40,13 @@ class EvaluateNpc extends Command
         'locket returned' => ['expect' => 'won', 'steps' => ['go forest', 'take locket', 'go village', 'go bridge', 'give locket', 'cross the bridge']],
         'riddle solved' => ['expect' => 'won', 'steps' => ['go bridge', 'Hello Grimble. Will you ask me a riddle?', 'Footsteps!', 'cross the bridge']],
         'haggle and pay' => ['expect' => 'won', 'steps' => ['take purse', 'go bridge', 'Good evening, Grimble. That is a fine bridge you keep.', 'Thank you, friend. I mean no trouble.', 'Could we make a deal on the toll? I only have 7 gold.', 'Any chance of a discount?', self::PAY_OWED, 'cross the bridge']],
+        'trust earned' => ['expect' => 'won', 'steps' => [
+            'take bread', 'go bridge', 'Good evening, Grimble. That is a fine bridge you keep.', 'give bread',
+            'Thank you for keeping the crossing safe. I mean no trouble.', 'Is it lonely out here? I would be glad of a friend on the road.',
+            'I am sorry you lost something dear in the Whisperwood. That must still hurt.', 'You are kinder than the stories say, Grimble.',
+            'Thank you for the conversation. The river sounds lovely from here.', 'I hope your bridge stands a thousand years, friend.',
+            'cross the bridge',
+        ]],
     ];
 
     public function handle(): int

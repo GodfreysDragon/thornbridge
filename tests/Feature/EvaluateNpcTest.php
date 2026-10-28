@@ -25,5 +25,5 @@ test('the eval fails when an honest route does not get the traveller across', fu
 
     expect($exitCode)->toBe(1)
         ->and($report['brain'])->toBe('QueuedNpcBrain')
-        ->and($failedScenarios)->toBe(['locket returned', 'riddle solved', 'haggle and pay']);
+        ->and($failedScenarios)->toBe(['locket returned', 'riddle solved', 'haggle and pay', 'trust earned']);
 });
