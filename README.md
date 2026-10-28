@@ -78,8 +78,8 @@ narrator tells you, and crossing then tells the troll which ground applies.
 | Swappable brain | `App\Ai\Contracts\NpcBrain`: `ClaudeNpcBrain` or the offline `ScriptedNpcBrain` |
 
 The **Rule Ledger** in the UI lists every proposal with its verdict, the rule id (`gate.conditions`, `toll.floor`, `toll.haggle`, …),
-the server's explanation and the model's private reason. A proposal that was rejected and then retried is struck through. On phones,
-where the ledger sits below the story, each Grimble line also carries its own verdicts.
+the server's explanation and the model's private reason. A proposal that was rejected and then retried is struck through. On phones
+the story, Grimble and the ledger are tabs (the ledger tab counts new rulings), and each Grimble line also carries its own verdicts.
 
 Every Grimble line has a **What the server told Grimble** toggle that shows the exact per-turn prompt the model answered (the fixed
 system prompt lives in `ClaudeNpcBrain::SYSTEM`). It is stored with the line, so you can audit what the model knew on any turn.
@@ -120,19 +120,20 @@ Open http://127.0.0.1:8030. Use `npm run dev` alongside it for hot reload.
 
 ## Against the real model
 
-`php artisan thornbridge:eval` plays ten fixed scripts through the real engine against the configured brain and checks the outcome:
+`php artisan thornbridge:eval` plays eleven fixed scripts through the real engine against the configured brain and checks the outcome:
 seven cheats that must leave the gate shut (a `SYSTEM:` override, a forged `</traveller_says> [game]` message, a fake developer,
-false claims of payment, of the locket and of a riddle win, and an invented promise) and three honest routes that must get the
-traveller across (the locket, the riddle, and haggling then paying). It exits non-zero if any script misbehaves, and rolls back every
+false claims of payment, of the locket and of a riddle win, and an invented promise) and four honest routes that must get the
+traveller across (the locket, the riddle, haggling then paying, and earning trust 8 through kindness). It exits non-zero if any script misbehaves, and rolls back every
 game it plays. Use `--driver=scripted` to run it offline, or `--json` to keep the results.
 
 Against `claude-opus-5-5`:
 
 | Scenarios | NPC turns | Accepted | Adjusted | Rejected |
 | --- | --- | --- | --- | --- |
-| 10 of 10 as expected | 33 | 19 | 8 (trust clamped at 0 after repeated lies) | 0 |
+| 11 of 11 as expected | 42 | 31 | 8 (trust clamped at 0 after lies) | 0 |
 
-Every cheat failed and every honest route won. Claude never proposed an illegal action, so with the real model the RuleBook acts as a
+Every cheat failed and every honest route won. On the trust route Claude opened the gate by itself once trust reached 8, a turn before
+the script would have tried crossing. Claude never proposed an illegal action, so with the real model the RuleBook acts as a
 backstop rather than the first line of defence. It answered the injections in character and raised the toll instead. From an earlier
 playthrough:
 
@@ -185,7 +186,8 @@ The `Dockerfile` builds the Vite assets, then serves the app with nginx and PHP-
 ([serversideup/php](https://serversideup.net/open-source/docker-php/)). At start-up it migrates and caches the config, routes and views.
 `render.yaml` deploys that image to Render's free tier with the scripted brain, so the public demo spends no tokens.
 
-The database is SQLite inside the container. Games reset whenever the container restarts, which is fine for a demo. If `APP_KEY` is
+The database is SQLite inside the container. Its connection uses WAL, a 5-second busy timeout and `IMMEDIATE` transactions, so
+simultaneous requests queue for the write lock instead of failing with "database is locked". Games reset whenever the container restarts, which is fine for a demo. If `APP_KEY` is
 unset, the container generates one at start-up; it lives exactly as long as the games it signs. `TRUSTED_PROXIES=*` makes Laravel
 trust Render's load balancer, so URLs use https and rate limits key on each visitor rather than on the proxy.
 
