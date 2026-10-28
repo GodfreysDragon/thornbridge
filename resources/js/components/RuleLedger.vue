@@ -14,13 +14,13 @@ const badge: Record<string, string> = {
 </script>
 
 <template>
-    <section class="flex min-h-0 flex-col rounded-lg border border-ink-700 bg-ink-900 p-4" aria-label="Rule ledger">
+    <section class="flex min-h-0 flex-col rounded-lg border border-ink-700 bg-ink-900 p-4 lg:min-h-40 lg:flex-1" aria-label="Rule ledger">
         <h2 class="font-display text-lg font-semibold">Rule ledger</h2>
         <p class="mt-0.5 text-xs text-parchment-500">Every change the NPC proposes, and how the server ruled on it.</p>
 
         <p v-if="!rulings.length" class="mt-4 text-sm text-parchment-500 italic">Nothing proposed yet. Go talk to the troll.</p>
 
-        <ol v-else class="mt-3 max-h-[28rem] space-y-2 overflow-y-auto pr-1">
+        <ol v-else class="mt-3 max-h-[28rem] space-y-2 overflow-y-auto pr-1 lg:max-h-none lg:min-h-0 lg:flex-1">
             <li
                 v-for="ruling in newestFirst"
                 :key="ruling.id"

@@ -94,10 +94,10 @@ onMounted(async () => {
 </script>
 
 <template>
-    <div class="mx-auto max-w-7xl px-4 py-6 sm:px-6 lg:py-8">
-        <header class="mb-6 flex flex-wrap items-end justify-between gap-4">
+    <div class="mx-auto flex max-w-7xl flex-col px-4 py-6 sm:px-6 lg:h-dvh lg:py-4">
+        <header class="mb-6 flex shrink-0 flex-wrap items-end justify-between gap-4 lg:mb-3">
             <div>
-                <h1 class="font-display text-3xl font-semibold tracking-tight text-parchment-100 sm:text-4xl">Thornbridge</h1>
+                <h1 class="font-display text-3xl font-semibold tracking-tight text-parchment-100 sm:text-4xl lg:text-3xl">Thornbridge</h1>
                 <p class="mt-1 max-w-2xl text-sm text-parchment-500">
                     A text adventure whose troll is voiced by
                     {{ driver === 'scripted' ? 'an offline scripted brain' : 'Claude' }}. The model only
@@ -127,8 +127,8 @@ onMounted(async () => {
             {{ error ?? 'Setting out…' }}
         </div>
 
-        <div v-else class="grid gap-6 lg:grid-cols-[minmax(0,1fr)_22rem]">
-            <main class="flex min-w-0 flex-col gap-4">
+        <div v-else class="grid gap-6 lg:min-h-0 lg:flex-1 lg:grid-cols-[minmax(0,1fr)_22rem] lg:grid-rows-[minmax(0,1fr)] lg:gap-4">
+            <main class="flex min-w-0 flex-col gap-4 lg:min-h-0 lg:gap-3">
                 <SceneArt :location="game.location.key" :mood="game.npc.mood" :status="game.status" />
                 <StoryLog :events="events" :busy="busy" />
                 <p v-if="error" role="alert" class="rounded-md border border-blood-400/40 bg-blood-400/10 px-3 py-2 text-sm text-blood-400">
@@ -145,7 +145,7 @@ onMounted(async () => {
                 <CommandBar v-else :game="game" :busy="busy" @send="send" />
             </main>
 
-            <aside class="flex min-w-0 flex-col gap-4">
+            <aside class="flex min-w-0 flex-col gap-4 lg:min-h-0 lg:gap-3 lg:overflow-y-auto">
                 <NpcPanel :game="game" />
                 <RuleLedger :rulings="rulings" />
             </aside>

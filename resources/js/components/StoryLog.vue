@@ -48,6 +48,7 @@ watch(
         await nextTick();
         log.value?.scrollTo({ top: log.value.scrollHeight, behavior: 'smooth' });
     },
+    { immediate: true },
 );
 </script>
 
@@ -56,7 +57,7 @@ watch(
         ref="log"
         aria-live="polite"
         aria-label="Story"
-        class="h-[26rem] overflow-y-auto rounded-lg border border-ink-700 bg-ink-900 p-4 sm:h-[30rem] sm:p-5"
+        class="h-[26rem] overflow-y-auto rounded-lg border border-ink-700 bg-ink-900 p-4 sm:h-[30rem] sm:p-5 lg:h-auto lg:min-h-0 lg:flex-1"
     >
         <ol class="space-y-4">
             <li v-for="event in story" :key="event.id" class="animate-rise">

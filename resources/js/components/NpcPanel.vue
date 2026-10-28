@@ -54,8 +54,8 @@ const moodColour: Record<string, string> = {
             </div>
         </div>
 
-        <h3 class="mt-4 text-xs font-medium tracking-wide text-parchment-500 uppercase">Grounds for passage</h3>
-        <ul class="mt-1.5 space-y-1 text-sm">
+        <h3 class="mt-4 text-xs lg:mt-3 font-medium tracking-wide text-parchment-500 uppercase">Grounds for passage</h3>
+        <ul class="mt-1.5 space-y-1 text-sm lg:space-y-0.5">
             <li v-for="ground in grounds" :key="ground.key" class="flex items-center gap-2">
                 <span
                     class="flex size-4 items-center justify-center rounded-sm border text-[10px]"
@@ -67,7 +67,7 @@ const moodColour: Record<string, string> = {
             </li>
         </ul>
 
-        <dl class="mt-4 grid grid-cols-2 gap-x-4 gap-y-2 border-t border-ink-700 pt-3 text-sm">
+        <dl class="mt-4 grid grid-cols-2 gap-x-4 gap-y-2 border-t border-ink-700 pt-3 text-sm lg:mt-3 lg:gap-y-1">
             <dt class="text-parchment-500">Your gold</dt>
             <dd class="text-right tabular-nums text-ember-400">{{ game.player.gold }}</dd>
             <dt class="text-parchment-500">Toll range</dt>
