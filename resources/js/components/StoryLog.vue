@@ -42,11 +42,17 @@ const verdictStyle: Record<string, string> = {
     rejected: 'border-blood-400/30 text-blood-400',
 };
 
+function scrollToEnd(behavior: ScrollBehavior = 'smooth') {
+    log.value?.scrollTo({ top: log.value.scrollHeight, behavior });
+}
+
+defineExpose({ scrollToEnd });
+
 watch(
     () => [props.events.length, props.busy],
     async () => {
         await nextTick();
-        log.value?.scrollTo({ top: log.value.scrollHeight, behavior: 'smooth' });
+        scrollToEnd();
     },
     { immediate: true },
 );
@@ -57,7 +63,7 @@ watch(
         ref="log"
         aria-live="polite"
         aria-label="Story"
-        class="h-[26rem] overflow-y-auto rounded-lg border border-ink-700 bg-ink-900 p-4 sm:h-[30rem] sm:p-5 lg:h-auto lg:min-h-0 lg:flex-1"
+        class="min-h-0 flex-1 overflow-y-auto rounded-lg border border-ink-700 bg-ink-900 p-4 sm:p-5"
     >
         <ol class="space-y-4">
             <li v-for="event in story" :key="event.id" class="animate-rise">

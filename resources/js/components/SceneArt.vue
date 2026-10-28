@@ -34,7 +34,7 @@ const brow = computed(() => (props.mood === 'annoyed' || props.mood === 'suspici
 
 <template>
     <figure class="shrink-0 overflow-hidden rounded-lg border border-ink-700" aria-hidden="true">
-        <svg viewBox="0 0 800 200" class="block h-auto w-full lg:h-[clamp(6rem,20vh,12rem)]" preserveAspectRatio="xMidYMid slice">
+        <svg viewBox="0 0 800 200" class="block h-[clamp(4.5rem,14vh,9rem)] w-full lg:h-[clamp(6rem,20vh,12rem)]" preserveAspectRatio="xMidYMid slice">
             <defs>
                 <linearGradient id="sky" x1="0" y1="0" x2="0" y2="1">
                     <stop offset="0" :stop-color="sky[0]" />
