@@ -8,6 +8,9 @@ against the authoritative game state.
 > **The AI proposes, the server disposes.** You can sweet-talk, bribe, lie to or prompt-inject the troll. If the model believes you,
 > the gate still stays shut unless the server agrees.
 
+**[Play the live demo](https://thornbridge.onrender.com)**: it runs the offline scripted brain, so it costs nothing to play. It sleeps
+when idle, so the first visit can take about a minute to wake.
+
 ![A prompt injection and a false payment claim, both refused in the Rule Ledger](docs/media/cheat-blocked.gif)
 
 _Recorded with the offline scripted brain, which is deliberately gullible: it proposes `let_pass` and the RuleBook rejects it._
