@@ -277,6 +277,14 @@ test('a toll lowered to what was already paid is announced instead of left unnot
     expect($brain->prompts[1]->facts)->toBe(['The traveller is waiting at your gate to cross. The game recognises grounds for passage (toll paid), so you may let them pass.']);
 });
 
+test('crossing with trust as the grounds wins the game with the scripted npc', function () {
+    $game = Game::factory()->atBridge()->withState(['npc' => ['trust' => 8]])->create();
+
+    play($game, 'cross the bridge')
+        ->assertJsonPath('game.status', 'won')
+        ->assertJsonPath('game.passage_grounds', ['trust earned']);
+});
+
 test('crossing without grounds is still blocked', function () {
     $game = Game::factory()->atBridge()->create();
     $brain = useBrain();

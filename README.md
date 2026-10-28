@@ -153,7 +153,7 @@ scripted decisions.
 ## Tests
 
 ```bash
-php artisan test        # 73 Pest tests, no network
+php artisan test        # 74 Pest tests, no network
 vendor/bin/phpstan analyse  # Larastan, level 7
 npm run typecheck       # vue-tsc
 ```

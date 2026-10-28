@@ -45,6 +45,10 @@ class ScriptedNpcBrain implements NpcBrain
             return $this->say('Footsteps! Bah, nobody gets that one. A deal\'s a deal. Cross.', NpcMood::Friendly, 1, NpcAction::LetPass, reason: 'The riddle was solved.');
         }
 
+        if (str_contains($facts, 'waiting at your gate to cross')) {
+            return $this->say('Back again? Fair\'s fair. Up goes the latch.', NpcMood::Friendly, 0, NpcAction::LetPass, reason: 'The game says the traveller has grounds to cross.');
+        }
+
         if (str_contains($facts, 'paid you')) {
             return $owed === 0
                 ? $this->say('Clink clink. That settles it. Mind the third plank.', NpcMood::Friendly, 1, NpcAction::LetPass, reason: 'The toll is paid in full.')
