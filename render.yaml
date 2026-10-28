@@ -1,0 +1,19 @@
+services:
+  - type: web
+    name: thornbridge
+    runtime: docker
+    plan: free
+    healthCheckPath: /up
+    envVars:
+      - key: PORT
+        value: 8080
+      - key: APP_ENV
+        value: production
+      - key: APP_DEBUG
+        value: false
+      - key: LOG_CHANNEL
+        value: stderr
+      - key: AI_DRIVER
+        value: scripted
+      - key: TRUSTED_PROXIES
+        value: "*"

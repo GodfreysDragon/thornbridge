@@ -56,6 +56,20 @@ return [
 
     /*
     |--------------------------------------------------------------------------
+    | Trusted Proxies
+    |--------------------------------------------------------------------------
+    |
+    | Behind a load balancer (e.g. Render), trust its X-Forwarded-* headers so
+    | URLs use https and the visitor's address is the real client. Use "*"
+    | to trust the connecting proxy. Leave it unset when clients can reach
+    | the app directly, because then they could forge those headers.
+    |
+    */
+
+    'trusted_proxies' => env('TRUSTED_PROXIES'),
+
+    /*
+    |--------------------------------------------------------------------------
     | Application Timezone
     |--------------------------------------------------------------------------
     |

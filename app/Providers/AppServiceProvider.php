@@ -7,6 +7,7 @@ use App\Ai\ClaudeNpcBrain;
 use App\Ai\Contracts\NpcBrain;
 use App\Ai\ScriptedNpcBrain;
 use Illuminate\Cache\RateLimiting\Limit;
+use Illuminate\Http\Middleware\TrustProxies;
 use Illuminate\Http\Request;
 use Illuminate\Http\Resources\Json\JsonResource;
 use Illuminate\Support\Facades\RateLimiter;
@@ -35,7 +36,20 @@ class AppServiceProvider extends ServiceProvider
     {
         JsonResource::withoutWrapping();
 
+        $this->configureTrustedProxies();
         $this->configureRateLimiting();
+    }
+
+    /**
+     * Trust the load balancer's forwarded headers when one is configured.
+     */
+    protected function configureTrustedProxies(): void
+    {
+        $proxies = config('app.trusted_proxies');
+
+        if (is_string($proxies) && $proxies !== '') {
+            TrustProxies::at($proxies === '*' ? '*' : array_map(trim(...), explode(',', $proxies)));
+        }
     }
 
     /**

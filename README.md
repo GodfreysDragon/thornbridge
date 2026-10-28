@@ -150,7 +150,7 @@ scripted decisions.
 ## Tests
 
 ```bash
-php artisan test        # 69 Pest tests, no network
+php artisan test        # 73 Pest tests, no network
 vendor/bin/phpstan analyse  # Larastan, level 7
 npm run typecheck       # vue-tsc
 ```
@@ -175,6 +175,16 @@ every push. It needs no API key.
 
 Both `{id}` routes need the header `X-Game-Token: <token>`. The token is an HMAC of the game id under `APP_KEY`, so nothing extra is
 stored and rotating the key revokes every token. A missing or wrong token gets the same 404 as an unknown game.
+
+## Deploying
+
+The `Dockerfile` builds the Vite assets, then serves the app with nginx and PHP-FPM
+([serversideup/php](https://serversideup.net/open-source/docker-php/)). At start-up it migrates and caches the config, routes and views.
+`render.yaml` deploys that image to Render's free tier with the scripted brain, so the public demo spends no tokens.
+
+The database is SQLite inside the container. Games reset whenever the container restarts, which is fine for a demo. If `APP_KEY` is
+unset, the container generates one at start-up; it lives exactly as long as the games it signs. `TRUSTED_PROXIES=*` makes Laravel
+trust Render's load balancer, so URLs use https and rate limits key on each visitor rather than on the proxy.
 
 ## License
 

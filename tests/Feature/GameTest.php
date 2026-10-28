@@ -7,6 +7,7 @@ use App\Enums\NpcAction;
 use App\Game\World;
 use App\Http\Middleware\EnsureGameToken;
 use App\Models\Game;
+use App\Providers\AppServiceProvider;
 use Illuminate\Support\Facades\Cache;
 use Illuminate\Testing\TestResponse;
 use Tests\Support\QueuedNpcBrain;
@@ -351,5 +352,17 @@ test('rate limits key on the configured edge header, and ignore it when none is 
     $this->withHeader('CF-Connecting-IP', '198.51.100.4')->postJson('/api/games')->assertStatus($secondVisitorStatus);
 })->with([
     'behind the edge' => ['CF-Connecting-IP', 201],
+    'reachable directly' => [null, 429],
+]);
+
+test('forwarded headers decide the visitor only when trusted proxies are configured', function (?string $proxies, int $secondVisitorStatus) {
+    config(['app.trusted_proxies' => $proxies, 'ai.rate_limits.games_per_hour' => 1]);
+    app()->getProvider(AppServiceProvider::class)->boot();
+
+    $this->withHeader('X-Forwarded-For', '203.0.113.7')->postJson('/api/games')->assertCreated();
+    $this->withHeader('X-Forwarded-For', '203.0.113.7')->postJson('/api/games')->assertTooManyRequests();
+    $this->withHeader('X-Forwarded-For', '198.51.100.4')->postJson('/api/games')->assertStatus($secondVisitorStatus);
+})->with([
+    'behind a load balancer' => ['*', 201],
     'reachable directly' => [null, 429],
 ]);
