@@ -46,4 +46,5 @@ jobs:
           for i in $(seq 1 30); do curl -fs http://localhost:8080/up && exit 0; sleep 2; done
           docker logs thornbridge
           exit 1
-      - run: curl -fs -X POST http://localhost:8080/api/games -H 'Accept: application/json' | grep -q '"token"'
+      - run: |
+          curl -fs -X POST http://localhost:8080/api/games -H 'Accept: application/json' | grep -q '"token"'
