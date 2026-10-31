@@ -67,7 +67,7 @@ narrator tells you, and crossing then tells the troll which ground applies.
 | Every rule, as a pure, unit-tested function | `app/Game/RuleBook.php` |
 | The model's only levers (closed enum) | `app/Enums/NpcAction.php` + `NpcDecision::schema()` (strict JSON schema) |
 | What the model is allowed to know | `app/Ai/Data/NpcPrompt.php`: no riddle answer, no raw rows |
-| Player text can't escape its tag | `ClaudeNpcBrain::render()` escapes `<`/`>` inside `<traveller_says>` |
+| Player text can't escape its tag | `NpcPrompt::render()` escapes `<`/`>` inside `<traveller_says>` |
 | Repair loop after an illegal action | `GameEngine::npcTurn()` (`REPAIR_ATTEMPTS = 1`) |
 | Memory comes from the server's record, not the client | `GameEngine::transcript()` rebuilds it from `game_events` |
 | A failed model call changes nothing | The engine builds the turn in memory and commits once at the end |
